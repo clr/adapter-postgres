@@ -1,19 +1,64 @@
 = adapter-postgres
 
-Description goes here.
+== DESCRIPTION:
 
-== Contributing to adapter-postgres
- 
-* Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
-* Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
-* Fork the project
-* Start a feature/bugfix branch
-* Commit and push until you are happy with your contribution
-* Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
-* Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
+Postgres adapter for adapter gem. Uses the HSTORE data type. See adapter for more info on why
+you would want to do this -- https://github.com/newtoy/adapter
 
-== Copyright
+== FEATURES/PROBLEMS:
 
-Copyright (c) 2011 CLR. See LICENSE.txt for
-further details.
+This relies on the HSTORE data type in PostgreSQL.  It will not work in MySQL, and HSTORE is as of
+this writing delegated to the 'contribs' package of PostgreSQL, not the core package.  See your
+platform directions for installing 'contribs'.
 
+Also note that implementation of HSTORE in v8.4 and v9+ are very different and probably exhibit
+very different performance profiles.
+
+== SYNOPSIS:
+
+    require 'adapter/postgres'
+
+    client = PGconn.connect("host=localhost port=5432 dbname=test user=#{user} password=#{pword}")
+or
+    client = ActiveRecord::Base.connection.instance_variable_get("@connection")
+
+    adapter = Adapter[:postgres].new(client)
+    adapter['foo'] = 'bar'
+etc...
+
+See examples/ or specs/ for more examples.
+
+== REQUIREMENTS:
+
+PostgreSQL 8.4+ and PostgreSQL-contribs
+pg or some other Ruby gem that provides a PGconn style connection to the database.
+
+== INSTALL:
+
+    gem install adapter-postgres
+
+You need to add the HSTORE data type to your database from contribs. If your contribs is installed
+into /usl/share/pgsql/contrib, then as the user 'postgres' you might run:
+
+    psql database_name < /usr/share/pgsql/contrib/hstore.sql
+
+This will give the database 'database_name' access to the HSTORE data type that the gem relies on.
+There is a copy of 'hstore.sql' from PostgreSQL8.4 included in the 'examples' directory of this gem
+for convenience.
+
+Next, you need to create the table and one row for the data to be saved to.  You will want to create
+some kind of migration depending what kind of app you are working in that runs the following SQL
+only once inside the database:
+
+    CREATE TABLE generic_hstore_table (data hstore);
+    INSERT INTO generic_hstore_table VALUES (''::hstore);
+
+Now you can begin using the adapter.  See the SYNOPSIS above.
+
+== Note on Patches/Pull Requests
+
+* Fork the project.
+* Make your feature addition or bug fix.
+* Add tests for it. This is important so we don't break it in a future version unintentionally.
+* Commit, do not mess with rakefile, version, or history. (if you want to have your own version, that is fine, but bump version in a commit by itself so we can ignore when we pull)
+* Send us a pull request. Bonus points for topic branches.
